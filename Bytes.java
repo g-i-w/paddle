@@ -50,11 +50,12 @@ public class Bytes {
 		if (minLength > bytes.length) {
 			int doubleLength = bytes.length*2;
 			int newLength = ( minLength < doubleLength ? doubleLength : minLength );
-			System.out.println(this.getClass().getName()+": resizing length from "+bytes.length+" to "+newLength);
+			//System.out.println(this.getClass().getName()+": resizing length from "+bytes.length+" to "+newLength);
 			byte[] newBytes = new byte[newLength];
-			for (int i=0; i<bytes.length; i++) {
-				newBytes[i] = bytes[i];
-			}
+			System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
+			//for (int i=0; i<bytes.length; i++) {
+			//	newBytes[i] = bytes[i];
+			//}
 			bytes = newBytes;
 		}
 	}
@@ -74,6 +75,10 @@ public class Bytes {
 		bytes = new byte[size];
 	}
 
+	public Bytes () {
+		this( 1024 );
+	}
+
 
 	// general
 
@@ -87,6 +92,12 @@ public class Bytes {
 	
 	public byte[] bytes () {
 		return bytes;
+	}
+	
+	public byte[] data () {
+		byte[] data = new byte[lastIndex+1];
+		System.arraycopy(bytes, 0, data, 0, lastIndex+1);
+		return data;
 	}
 
 	public byte read ( int i ) {

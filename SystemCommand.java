@@ -24,20 +24,22 @@ public class SystemCommand extends TimerTask {
 	private long successfulRuns;
 	private int exitValue;
 	private boolean verbose;
+	private boolean lastLineOnly;
 
 	public SystemCommand ( String command ) {
-		this( command, "", 10000 ); // default: 10 sec timeout
+		this( command, command, 10000 ); // default: 10 sec timeout
 	}
 
 	public SystemCommand ( String command, String name, long timeout ) {
-		this( command, name, timeout, true );
+		this( command, name, timeout, false, false );
 	}
 
-	public SystemCommand ( String command, String name, long timeout, boolean verbose ) {
+	public SystemCommand ( String command, String name, long timeout, boolean verbose, boolean lastLineOnly ) {
 		this.name = name;
 		this.command = command;
 		this.timeout = timeout;
 		this.verbose = verbose;
+		this.lastLineOnly = lastLineOnly;
 		running = false;
 		done = false;
 		executed = 0;
@@ -79,8 +81,8 @@ public class SystemCommand extends TimerTask {
 		} catch (Exception e) {
 			onException( e );
 		}
-		stdout = new ReadStream( stdoutStream, "stdout" );
-		stderr = new ReadStream( stderrStream, "stderr" );
+		stdout = new ReadStream( stdoutStream, "stdout", lastLineOnly );
+		stderr = new ReadStream( stderrStream, "stderr", lastLineOnly );
 		running = true;
 		executed++;
 		try {
@@ -164,6 +166,11 @@ public class SystemCommand extends TimerTask {
 		return name;
 	}
 	
+	public String output () {
+		run();
+		return stdout().text();
+	}
+	
 	public String toString () {
 		return
 			"command: "+command()+"\n"+
@@ -185,36 +192,50 @@ public class SystemCommand extends TimerTask {
 	
 	// test
 	public static void main (String[] args) throws Exception {
+	
+		if (args.length>0) {
 		
-		SystemCommand sc3 = new SystemCommand( "sleep 5s", "long running command", 1000 );
-		sc3.run();
-		System.out.println( sc3 );
+			SystemCommand sc = new SystemCommand( args[0] );
+			new Thread( sc ).start();
+			//sc.run();
+			while(true) {
+				Thread.sleep(500);
+				System.out.println( sc );
+			}
+
+		} else {
 		
-		System.out.println();
-		
-		SystemCommand sc = new SystemCommand( "ls -lh", "test command!", 1000 );
-		System.out.println( sc );
-		sc.run();
-		while(sc.running());
-		System.out.println( sc );
-		
-		System.out.println();
-		
-		SystemCommand sc1 = new SystemCommand( "ls -z", "stderr command", 1000 );
-		sc1.run();
-		while(sc1.running());
-		System.out.println( sc1 );
-		
-		System.out.println();
-		
-		SystemCommand sc2 = new SystemCommand( "l", "bad command", 1000 );
-		sc2.run();
-		System.out.println( sc2 );
-		while(sc2.running());
-		System.out.println( sc2 );
-		
-		Thread.sleep(500);
-		System.out.println("done.");
+			SystemCommand sc3 = new SystemCommand( "sleep 5s", "long running command", 1000 );
+			sc3.run();
+			System.out.println( sc3 );
+			
+			System.out.println();
+			
+			SystemCommand sc = new SystemCommand( "ls -lh", "test command!", 1000 );
+			System.out.println( sc );
+			sc.run();
+			while(sc.running());
+			System.out.println( sc );
+			
+			System.out.println();
+			
+			SystemCommand sc1 = new SystemCommand( "ls -z", "stderr command", 1000 );
+			sc1.run();
+			while(sc1.running());
+			System.out.println( sc1 );
+			
+			System.out.println();
+			
+			SystemCommand sc2 = new SystemCommand( "l", "bad command", 1000 );
+			sc2.run();
+			System.out.println( sc2 );
+			while(sc2.running());
+			System.out.println( sc2 );
+			
+			Thread.sleep(500);
+			System.out.println("done.");
+			
+		}
 	}
 
 }

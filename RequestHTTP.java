@@ -1,6 +1,7 @@
 package paddle;
 
 import java.net.*;
+import java.util.*;
 
 public class RequestHTTP extends StructureHTTP {
 
@@ -160,6 +161,20 @@ public class RequestHTTP extends StructureHTTP {
 	
 	public String path () {
 		return path.toString();
+	}
+	
+	public Map<String,String> query () {
+		Map<String,String> query = new LinkedHashMap<>();
+		try {
+			String[] pairs = new String(data()).split("&");
+			for (String pair : pairs) {
+				String[] keyVal = pair.split("=");
+				query.put( keyVal[0], keyVal[1] );
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return query;
 	}
 	
 	public byte[] data () {

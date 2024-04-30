@@ -6,16 +6,22 @@ public class ReadStream extends Thread {
 	
 	private InputStream input;
 	private boolean done;
+	private boolean lastLineOnly;
 	private Bytes bytesObject;
 	private String text;
-	private int length;
+	private int cursor;
 	
 	public ReadStream ( InputStream input, String name ) {
+		this( input, name, false );
+	}
+	
+	public ReadStream ( InputStream input, String name, boolean lastLineOnly ) {
 		setName( name );
 		this.input = input;
-		bytesObject = new Bytes( 1024 );
-		length = 0;
+		bytesObject = new Bytes();
+		cursor = 0;
 		done = false;
+		this.lastLineOnly = lastLineOnly;
 		start();
 	}
 	
@@ -23,7 +29,11 @@ public class ReadStream extends Thread {
 		try {
 			int intContainingByte;
 			while ( (intContainingByte = input.read()) > 0 ) { // not 0 (null) or -1 (end of stream)
-				bytesObject.write( (byte)intContainingByte, length++ );
+				if (lastLineOnly && (intContainingByte == '\n' || intContainingByte == '\r')) {
+					cursor=0;
+				} else {
+					bytesObject.write( (byte)intContainingByte, cursor++ );
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -44,7 +54,8 @@ public class ReadStream extends Thread {
 	}
 	
 	public byte[] bytes () {
-		if (bytesObject != null) {
+		/*if (bytesObject != null) {
+			int length = bytesObject.last()+1;
 			byte[] nonNull = new byte[length];
 			for (int i=0; i<length; i++) {
 				nonNull[i] = bytesObject.bytes()[i];
@@ -52,7 +63,8 @@ public class ReadStream extends Thread {
 			return nonNull;
 			//return bytesObject.bytes();
 		}
-		else return new byte[0];
+		else return new byte[0];*/
+		return bytesObject.data();
 	}
 	
 	public boolean done () {

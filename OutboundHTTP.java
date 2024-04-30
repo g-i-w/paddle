@@ -9,6 +9,24 @@ public class OutboundHTTP extends ConnectionTCP {
 	private ResponseHTTP response;
 	private Server server;
 	
+	// simple anonymous connection
+	
+	public OutboundHTTP ( String address, int port, String method, String path ) throws Exception {
+		this (
+			new ServerState(),
+			new Socket( address, port ),
+			method,
+			path,
+			null,
+			null,
+			new byte[65536],
+			-1,
+			4000
+		);
+	}
+	
+	// connection from a Server
+	
 	public OutboundHTTP ( Server server, String address, int port, String method, String path, byte[] data, byte[] inboundMemory ) throws Exception {
 		this( server.state(), new Socket( address, port ), method, path, null, data, inboundMemory, server.sequenceId(), 4000 );
 		this.server = server;
@@ -18,6 +36,8 @@ public class OutboundHTTP extends ConnectionTCP {
 		this( server.state(), new Socket ( address, port, localAddress, localPort ), method, path, null, data, inboundMemory, server.sequenceId(), 4000 );
 		this.server = server;
 	}
+	
+	// full featured connection
 	
 	public OutboundHTTP (
 		ServerState state,
@@ -74,7 +94,7 @@ public class OutboundHTTP extends ConnectionTCP {
 	
 	// testing
 	public static void main ( String[] args ) throws Exception {
-		new OutboundHTTP (
+		/*new OutboundHTTP (
 			new ServerState(),
 			new Socket( args[0], ( args.length > 1 ? Integer.parseInt(args[1]) : 80 ) ),
 			"GET",
@@ -84,6 +104,12 @@ public class OutboundHTTP extends ConnectionTCP {
 			new byte[65536],
 			-1,
 			4000
+		);*/
+		new OutboundHTTP (
+			args[0],
+			( args.length > 1 ? Integer.parseInt(args[1]) : 80 ),
+			"GET",
+			"/"
 		);
 	}
 		
