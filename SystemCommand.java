@@ -19,6 +19,7 @@ public class SystemCommand extends TimerTask {
 	private InputStream stderrStream;
 	private ReadStream stdout;
 	private ReadStream stderr;
+	private long durationStart;
 	private long duration;
 	private long timeout;
 	private long successfulRuns;
@@ -46,6 +47,7 @@ public class SystemCommand extends TimerTask {
 		skipped = 0;
 		destroyed = 0;
 		destroyedForcibly = 0;
+		durationStart = 0;
 		duration = 0;
 		successfulRuns = 0;
 		exitValue = 127; // default, in the event that an Exception leaves commandProc null
@@ -73,7 +75,7 @@ public class SystemCommand extends TimerTask {
 		}
 		done = false; // applicable only when run as repeat TimerTask
 		preExec();
-		long durationStart = System.currentTimeMillis();
+		durationStart = System.currentTimeMillis();
 		try {
 			commandProc = Runtime.getRuntime().exec( command );
 			stdoutStream = commandProc.getInputStream();
@@ -90,10 +92,10 @@ public class SystemCommand extends TimerTask {
 				commandProc.waitFor();
 			} else { // otherwise, wait until timeout... and if it doesn't die, another timeout... then '-9' it!
 				if (!commandProc.waitFor( timeout, TimeUnit.MILLISECONDS )) {
-					commandProc.destroy();
+					kill();
 					destroyed++;
 					if (!commandProc.waitFor( timeout, TimeUnit.MILLISECONDS )) {				
-						commandProc.destroyForcibly();
+						killForcibly();
 						destroyedForcibly++;
 					}
 				}
@@ -104,13 +106,37 @@ public class SystemCommand extends TimerTask {
 		while( commandProc != null && commandProc.isAlive() ) {
 			try { Thread.sleep(1); } catch (Exception e) { e.printStackTrace(); }
 		}
-		duration = System.currentTimeMillis() - durationStart;
+		duration = time();
 		done = true;
 		while( !stdout.done() || !stderr.done() ) { // ...in case the output buffers are still printing...
 			try { Thread.sleep(1); } catch (Exception e) { e.printStackTrace(); }
 		}
 		running = false;
 		postExec();
+	}
+	
+	public long time () {
+		return System.currentTimeMillis() - durationStart;
+	}
+	
+	public long timeout () {
+		return timeout;
+	}
+	
+	public void timeout ( long timeout ) {
+		this.timeout = timeout;
+	}
+	
+	public void kill () {
+		if (stdout!=null) stdout.end();
+		if (stderr!=null) stderr.end();
+		if (commandProc!=null) commandProc.destroy();
+	}
+	
+	public void killForcibly () {
+		if (commandProc!=null) commandProc.destroyForcibly();
+		if (stdout!=null) stdout.end();
+		if (stderr!=null) stderr.end();
 	}
 	
 	public String command () {

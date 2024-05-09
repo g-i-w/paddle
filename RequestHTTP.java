@@ -169,7 +169,8 @@ public class RequestHTTP extends StructureHTTP {
 			String[] pairs = new String(data()).split("&");
 			for (String pair : pairs) {
 				String[] keyVal = pair.split("=");
-				query.put( keyVal[0], keyVal[1] );
+				if (keyVal.length>1) query.put( keyVal[0], keyVal[1] );
+				else if (keyVal.length>0) query.put( keyVal[0], "" );
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

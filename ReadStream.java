@@ -28,7 +28,7 @@ public class ReadStream extends Thread {
 	public void run () {
 		try {
 			int intContainingByte;
-			while ( (intContainingByte = input.read()) > 0 ) { // not 0 (null) or -1 (end of stream)
+			while ( !done && (intContainingByte = input.read()) > 0 ) { // not 0 (null) or -1 (end of stream)
 				if (lastLineOnly && (intContainingByte == '\n' || intContainingByte == '\r')) {
 					cursor=0;
 				} else {
@@ -69,6 +69,10 @@ public class ReadStream extends Thread {
 	
 	public boolean done () {
 		return done;
+	}
+	
+	public void end () {
+		done = true;
 	}
 	
 	public InputStream input () {
