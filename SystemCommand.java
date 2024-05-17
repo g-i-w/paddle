@@ -93,10 +93,8 @@ public class SystemCommand extends TimerTask {
 			} else { // otherwise, wait until timeout... and if it doesn't die, another timeout... then '-9' it!
 				if (!commandProc.waitFor( timeout, TimeUnit.MILLISECONDS )) {
 					kill();
-					destroyed++;
 					if (!commandProc.waitFor( timeout, TimeUnit.MILLISECONDS )) {				
 						killForcibly();
-						destroyedForcibly++;
 					}
 				}
 			}
@@ -131,12 +129,14 @@ public class SystemCommand extends TimerTask {
 		if (stdout!=null) stdout.end();
 		if (stderr!=null) stderr.end();
 		if (commandProc!=null) commandProc.destroy();
+		destroyed++;
 	}
 	
 	public void killForcibly () {
 		if (commandProc!=null) commandProc.destroyForcibly();
 		if (stdout!=null) stdout.end();
 		if (stderr!=null) stderr.end();
+		destroyedForcibly++;
 	}
 	
 	public String command () {
@@ -194,7 +194,9 @@ public class SystemCommand extends TimerTask {
 	
 	public String output () {
 		run();
-		return stdout().text();
+		String stdout = stdout().text();
+		String stderr = stderr().text();
+		return ( !stdout.equals("") ? stdout : stderr );
 	}
 	
 	public String toString () {
