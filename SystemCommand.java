@@ -152,6 +152,11 @@ public class SystemCommand extends TimerTask {
 		return ( commandProc != null ? commandProc.exitValue() : exitValue );
 	}
 	
+	public boolean success () {
+		run();
+		return ( exitValue()==0 ? true : false );
+	}
+	
 	public ReadStream stdout () {
 		return stdout;
 	}
@@ -196,7 +201,8 @@ public class SystemCommand extends TimerTask {
 		run();
 		String stdout = stdout().text();
 		String stderr = stderr().text();
-		return ( !stdout.equals("") ? stdout : stderr );
+		String nl = ( !stdout.equals("") && !stderr.equals("") ? "\n" : "" );
+		return stdout+nl+stderr;
 	}
 	
 	public String toString () {

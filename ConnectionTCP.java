@@ -172,17 +172,17 @@ public abstract class ConnectionTCP extends Server implements Connection {
 	
 	public void loopEnded () {
 		complete = true;
-		System.out.println( this.getClass().getName()+" loop ended." );
+		//System.out.println( this.getClass().getName()+" loop ended." );
 		if (socket != null) {
 			try {
 				socket.close();
-				System.out.println( this.getClass().getName()+" '"+getName()+"': socket now closed." );
+				//System.out.println( this.getClass().getName()+" '"+getName()+"': socket now closed." );
 			} catch (Exception e) {
 				System.out.println( this.getClass().getName()+" '"+getName()+"': ERROR closing socket." );
 				e.printStackTrace();
 			}
 		} else {
-			System.out.println( this.getClass().getName()+" '"+getName()+"': socket was already closed." );
+			//System.out.println( this.getClass().getName()+" '"+getName()+"': socket was already closed." );
 		}
 	}
 	
@@ -313,7 +313,7 @@ public abstract class ConnectionTCP extends Server implements Connection {
 	}
 	
 	public void close () {
-		System.out.println( this.getClass().getName()+" has ended." );
+		//System.out.println( this.getClass().getName()+" is closing..." );
 		end();
 	}
 	

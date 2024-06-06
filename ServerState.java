@@ -16,6 +16,17 @@ public class ServerState {
 		);
 	}
 	
+	public void log ( String info, Connection c, boolean incoming ) {
+		System.out.println(
+			"["+c.connectionId()+"] "+
+			info+" "+
+			c.protocol()+" "+
+			c.localAddress()+":"+c.localPort()+
+			(incoming ? " <-- " : " --> ")+
+			c.remoteAddress()+":"+c.remotePort()
+		);
+	}
+	
 	
 	// Concurrency tools
 
@@ -33,19 +44,19 @@ public class ServerState {
 	// Events: opened, received, closed
 
 	public void opened ( Connection c ) {
-		System.out.println( "["+c.connectionId()+"] OPENED" );
+		//log( "OPENED:", c, c.inbound() );
 	}
 	
 	public void received ( Connection c ) {
-		print( c );
+		log( "RX "+(c.inboundData() != null ? c.inboundData().length+" bytes" : ""), c, true );
 	}
 	
 	public void transmitted ( Connection c ) {
-		print( c );
+		log( "TX "+(c.outboundData() != null ? c.outboundData().length+" bytes" : ""), c, false );
 	}
 	
 	public void closed ( Connection c ) {
-		System.out.println( "["+c.connectionId()+"] CLOSED" );
+		//log( "CLOSED:", c, c.inbound() );
 	}
 	
 	

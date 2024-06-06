@@ -64,6 +64,10 @@ public class InboundHTTP extends ConnectionTCP {
 	
 	public boolean complete () {
 		return request.complete();
-	}	
+	}
+	
+	// remove unnecessary output:
+
+	public void initSuccess () {}
 		
 }
