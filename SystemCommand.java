@@ -153,7 +153,7 @@ public class SystemCommand extends TimerTask {
 	}
 	
 	public boolean success () {
-		run();
+		complete();
 		return ( exitValue()==0 ? true : false );
 	}
 	
@@ -171,6 +171,14 @@ public class SystemCommand extends TimerTask {
 	
 	public boolean done () {
 		return done;
+	}
+	
+	public boolean begun () {
+		return running || done;
+	}
+	
+	public boolean finished () {
+		return !running && done; // all output buffers have finished printing
 	}
 	
 	public int executed () {
@@ -194,11 +202,21 @@ public class SystemCommand extends TimerTask {
 	}
 	
 	public String getName () {
+		return name();
+	}
+	
+	public String name () {
 		return name;
 	}
 	
+	public SystemCommand complete () {
+		if (!begun()) run();
+		while (!finished()) try {Thread.sleep(1);} catch (Exception e) {e.printStackTrace();}
+		return this;
+	}
+	
 	public String output () {
-		run();
+		complete();
 		String stdout = stdout().text();
 		String stderr = stderr().text();
 		String nl = ( !stdout.equals("") && !stderr.equals("") ? "\n" : "" );
