@@ -58,12 +58,22 @@ public abstract class ConnectionTCP extends Server implements Connection {
 	
 
 	public void init () throws Exception {
+		// timeout
+		timeoutStart = System.currentTimeMillis();
+
 		// pre-initialize in case of exception
 		remoteIP 		= "";
 		remoteDomain 		= "";
 		remotePort 		= 0;
 		localAddress 		= "";
 		localPort 		= 0;
+
+		// make sure the Socket object has been initialized 
+		while (socket==null) {
+			if ((int)(System.currentTimeMillis() - timeoutStart) > timeout)
+				throw new Exception( "ConnectionTCP: timeout while waiting for socket to become non-null");
+			sleep(1);
+		}
 
 		// local socket params
 		localPort 			= socket.getLocalPort();
@@ -85,9 +95,6 @@ public abstract class ConnectionTCP extends Server implements Connection {
 		// initial ServerState responce
 		state().opened( this );
 		//System.out.println( this.getClass().getName()+" socket: "+socket );
-		
-		// timeout
-		timeoutStart = System.currentTimeMillis();
 	}
 	
 	public void loop () throws Exception {

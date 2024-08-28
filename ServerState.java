@@ -1,5 +1,6 @@
 package paddle;
 
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ServerState {
@@ -60,6 +61,55 @@ public class ServerState {
 	}
 	
 	
+	// Protocol helpers
+	
+	public InboundUDP udp ( Connection c ) {
+		if (c instanceof InboundUDP) return (InboundUDP)c;
+		else return null;
+	}
+	
+	public InboundTCP tcp ( Connection c ) {
+		if (c instanceof InboundTCP) return (InboundTCP)c;
+		else return null;
+	}
+	
+	public InboundHTTP http ( Connection c ) {
+		if (c instanceof InboundHTTP) return (InboundHTTP)c;
+		else return null;
+	}
+	
+	public boolean httpPath ( InboundHTTP session, String path ) {
+		if (session!=null) return session.request().path().equals( path );
+		return false;
+	}
+	
+	public boolean httpQuery ( InboundHTTP session, String key ) {
+		if (session!=null) {
+			Map<String,String> map = session.request().query();
+			return map.get( key )!=null && !map.get( key ).equals("");
+		}
+		return false;
+	}
+	
+	public boolean httpQuery ( InboundHTTP session, String key, String value ) {
+		if (httpQuery( session, key )) return session.request().query().get( key ).equals( value );
+		return false;
+	}
+	
+	public Map<String,String> httpQueryFields ( InboundHTTP session, String[] fields ) {
+		Map<String,String> map1 = new TreeMap<>();
+		if (session!=null) {
+			Map<String,String> map0 = session.request().query();
+			for (String field : fields) {
+				if (map0.containsKey(field)) {
+					String value = map0.get(field);
+					if (value!=null) map1.put( field, value );
+					else map1.put( field, "" );
+				}
+			}
+		}
+		return map1;
+	}
 	
 	///////////////////////	Deprecated! Retained here for compatability ///////////////////////
 	public void respond ( Connection c ) {

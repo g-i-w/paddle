@@ -29,6 +29,7 @@ public class ServerHTTP extends Server implements Node {
 	// Exception is caught by abstract class Server
 	public void loop () throws Exception {
 		Socket socket = serverSocket.accept();  // Wait for a client to connect
+		//System.out.println( "here: "+socket );
 		new InboundHTTP(
 			this,
 			socket,
