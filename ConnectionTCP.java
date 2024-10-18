@@ -70,8 +70,8 @@ public abstract class ConnectionTCP extends Server implements Connection {
 
 		// make sure the Socket object has been initialized 
 		while (socket==null) {
-			if ((int)(System.currentTimeMillis() - timeoutStart) > timeout)
-				throw new Exception( "ConnectionTCP: timeout while waiting for socket to become non-null");
+			if ((int)(System.currentTimeMillis() - timeoutStart) > 10000) // can't use timeout value, because we're still in call to super( ) and it hasn't been initialized yet!
+				throw new Exception( "ConnectionTCP: timeout while waiting for socket to become non-null" );
 			sleep(1);
 		}
 
