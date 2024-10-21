@@ -86,7 +86,7 @@ public class ServerState {
 	public boolean httpQuery ( InboundHTTP session, String key ) {
 		if (session!=null) {
 			Map<String,String> map = session.request().query();
-			return map.get( key )!=null && !map.get( key ).equals("");
+			return map.containsKey( key );
 		}
 		return false;
 	}
@@ -94,6 +94,10 @@ public class ServerState {
 	public boolean httpQuery ( InboundHTTP session, String key, String value ) {
 		if (httpQuery( session, key )) return session.request().query().get( key ).equals( value );
 		return false;
+	}
+	
+	public Map<String,String> httpQuery ( InboundHTTP session ) {
+		return session.request().query();
 	}
 	
 	public Map<String,String> httpQueryFields ( InboundHTTP session, String[] fields ) {

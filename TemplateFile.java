@@ -8,7 +8,7 @@ import java.io.File;
 public class TemplateFile {
 
 	private List<String> fileFragments;
-	private HashMap<String, String> replacements;
+	private Map<String, String> replacements;
 	
 	public TemplateFile ( String filePath ) {
 		this( filePath, null );
@@ -49,6 +49,13 @@ public class TemplateFile {
 		for (int i=0; i<reps.length; i+=2) {
 			if (i+1 >= reps.length) break;
 			replace( reps[i], reps[i+1] );
+		}
+		return this;
+	}
+	
+	public TemplateFile replace ( Map<String,String> replacements ) {
+		for (String key : replacements.keySet()) {
+			this.replacements.put( key, replacements.get(key) );
 		}
 		return this;
 	}
