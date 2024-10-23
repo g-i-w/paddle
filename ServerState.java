@@ -2,6 +2,8 @@ package paddle;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.nio.file.*;
+import java.io.*;
 
 public class ServerState {
 
@@ -83,6 +85,15 @@ public class ServerState {
 		return false;
 	}
 	
+	public boolean httpPathBegins ( InboundHTTP session, String root ) {
+		if (session==null) return false;
+		int rootLen = root.length();
+		String path = session.request().path();
+		int pathLen = path.length();
+		if (pathLen >= rootLen && path.substring( 0, rootLen ).equals( root )) return true;
+		return false;
+	}
+	
 	public boolean httpQuery ( InboundHTTP session, String key ) {
 		if (session!=null) {
 			Map<String,String> map = session.request().query();
@@ -96,8 +107,16 @@ public class ServerState {
 		return false;
 	}
 	
-	public Map<String,String> httpQuery ( InboundHTTP session ) {
+	public Map<String,String> getHttpQuery ( InboundHTTP session ) {
+		if (session==null) return null;
 		return session.request().query();
+	}
+	
+	public String getHttpQuery ( InboundHTTP session, String key, String defaultValue ) {
+		if (session==null) return null;
+		String value = session.request().query().get( key );
+		if (value != null & !value.equals("")) return value;
+		return defaultValue;
 	}
 	
 	public Map<String,String> httpQueryFields ( InboundHTTP session, String[] fields ) {
@@ -113,6 +132,30 @@ public class ServerState {
 			}
 		}
 		return map1;
+	}
+	
+	public ResponseHTTP httpFileResponse ( InboundHTTP session, String rootPath, String mimeType, long maxSize ) {
+		String path = session.request().path();
+		if (path.indexOf("..") == -1) { // block dir traversal
+			try {
+				// File object
+				File file = new File( rootPath+path );
+				// check for directory
+				if (file.isDirectory()) throw new Exception( "ERROR: '"+file.getAbsolutePath()+"' is directory" );
+				// Path object
+				Path pathObj = file.toPath();
+				// check size (-1 to disable check)
+				long size = Files.size(pathObj);
+				if (maxSize > -1 && size > maxSize) throw new Exception( "ERROR: file '"+file.getAbsolutePath()+"' size "+size+" greater than max "+maxSize );
+				// read all bytes
+				return new ResponseHTTP( new String[]{ "Content-Type", mimeType }, Files.readAllBytes( pathObj ) );
+			} catch (Exception e) {
+				e.printStackTrace();
+				return new ResponseHTTP( "404", "Not Found", null, null );
+			}
+		} else {
+			return new ResponseHTTP( "403", "Forbidden", null, null );
+		}
 	}
 	
 	///////////////////////	Deprecated! Retained here for compatability ///////////////////////
