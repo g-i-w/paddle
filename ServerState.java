@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.nio.file.*;
 import java.io.*;
+import static java.util.Map.entry; 
 
 public class ServerState {
 
@@ -63,22 +64,28 @@ public class ServerState {
 	}
 	
 	
-	// Protocol helpers
+	// UDP connection
 	
 	public InboundUDP udp ( Connection c ) {
 		if (c instanceof InboundUDP) return (InboundUDP)c;
 		else return null;
 	}
 	
+	// TCP connection
+	
 	public InboundTCP tcp ( Connection c ) {
 		if (c instanceof InboundTCP) return (InboundTCP)c;
 		else return null;
 	}
 	
+	// HTTP connection
+	
 	public InboundHTTP http ( Connection c ) {
 		if (c instanceof InboundHTTP) return (InboundHTTP)c;
 		else return null;
 	}
+	
+	// HTTP path
 	
 	public boolean httpPath ( InboundHTTP session, String path ) {
 		if (session!=null) return session.request().path().equals( path );
@@ -93,6 +100,8 @@ public class ServerState {
 		if (pathLen >= rootLen && path.substring( 0, rootLen ).equals( root )) return true;
 		return false;
 	}
+	
+	// HTTP query
 	
 	public boolean httpQuery ( InboundHTTP session, String key ) {
 		if (session!=null) {
@@ -134,6 +143,77 @@ public class ServerState {
 		return map1;
 	}
 	
+	// HTTP response object
+	
+	public ResponseHTTP httpStringResponse ( String content, String mimeType ) {
+		return new ResponseHTTP(
+			new String[]{ "Content-Type", mimeType },
+			content
+		);
+	}
+	
+	public ResponseHTTP httpBinaryResponse ( byte[] bytes, String mimeType ) {
+		return new ResponseHTTP(
+			new String[]{ "Content-Type", mimeType },
+			bytes
+		);
+	}
+	
+	// HTTP respond now
+	
+	public boolean httpRespond( InboundHTTP session, ResponseHTTP response ) {
+		if (session != null) {
+			session.response( response );
+			return true;
+		} else return false;
+	}
+	
+	// HTTP code
+	
+	public boolean httpRespondCode ( InboundHTTP session, String code, String message ) {
+		return httpRespond( session, new ResponseHTTP( code, message, null, null ) );
+	}
+	
+	public boolean httpRespondBadRequest ( InboundHTTP session ) {
+		return httpRespond( session, httpBadRequest() );
+	}
+	
+	public boolean httpRespondForbidden ( InboundHTTP session ) {
+		return httpRespond( session, httpForbidden() );
+	}
+	
+	public boolean httpRespondNotFound ( InboundHTTP session ) {
+		return httpRespond( session, httpNotFound() );
+	}
+		
+	public ResponseHTTP httpBadRequest () {
+		return new ResponseHTTP( "400", "Bad Request", null, null );
+	}
+	
+	public ResponseHTTP httpForbidden () {
+		return new ResponseHTTP( "403", "Forbidden", null, null );
+	}
+	
+	public ResponseHTTP httpNotFound () {
+		return new ResponseHTTP( "404", "Not Found", null, null );
+	}
+		
+	// HTTP data
+		
+	public boolean httpRespondText ( InboundHTTP session, String text ) {
+		return httpRespond( session, httpStringResponse( text, "text/plain" ) );
+	}
+		
+	public boolean httpRespondHTML ( InboundHTTP session, String html ) {
+		return httpRespond( session, httpStringResponse( html, "text/html" ) );
+	}
+		
+	public boolean httpRespondJSON ( InboundHTTP session, String json ) {
+		return httpRespond( session, httpStringResponse( json, "application/json" ) );
+	}
+		
+	// HTTP file response
+		
 	public ResponseHTTP httpFileResponse ( InboundHTTP session, String rootPath, String mimeType, long maxSize ) {
 		String path = session.request().path();
 		if (path.indexOf("..") == -1) { // block dir traversal
@@ -148,15 +228,50 @@ public class ServerState {
 				long size = Files.size(pathObj);
 				if (maxSize > -1 && size > maxSize) throw new Exception( "ERROR: file '"+file.getAbsolutePath()+"' size "+size+" greater than max "+maxSize );
 				// read all bytes
-				return new ResponseHTTP( new String[]{ "Content-Type", mimeType }, Files.readAllBytes( pathObj ) );
+				//return new ResponseHTTP( new String[]{ "Content-Type", mimeType }, Files.readAllBytes( pathObj ) );
+				return httpBinaryResponse( Files.readAllBytes( pathObj ), mimeType );
 			} catch (Exception e) {
 				e.printStackTrace();
-				return new ResponseHTTP( "404", "Not Found", null, null );
+				return httpNotFound();
 			}
 		} else {
-			return new ResponseHTTP( "403", "Forbidden", null, null );
+			return httpForbidden();
 		}
 	}
+	
+	public String[] httpMIME () {
+		return new String[] {
+			".txt",		"text/plain",
+			".htm",		"text/html",
+			".html",	"text/html",
+			".js",		"application/javascript",
+			".json",	"application/json",
+			".jpg",		"image/jpg",
+			".jpeg",	"image/jpg",
+			".png",		"image/png"
+		};
+	}
+	
+	public String httpMIME (  InboundHTTP session ) {
+		String path = session.request().path();
+		String ext = path.substring( path.lastIndexOf(".")+1, path.length() );
+		String[] mimes = httpMIME();
+		for (int i=1; i<mimes.length; i+=2) {
+			if (ext.equals(mimes[i-1])) return mimes[i];
+		}
+		return null;
+	}
+	
+	public ResponseHTTP httpFileResponse ( InboundHTTP session, String rootPath ) {
+		String mime = httpMIME( session );
+		if (mime != null) return httpFileResponse( session, rootPath, mime, -1 );
+		else return httpForbidden();
+	}
+	
+	public boolean httpRespondFile ( InboundHTTP session, String rootPath ) {
+		return httpRespond( session, httpFileResponse( session, rootPath ) );
+	}
+	
 	
 	///////////////////////	Deprecated! Retained here for compatability ///////////////////////
 	public void respond ( Connection c ) {
