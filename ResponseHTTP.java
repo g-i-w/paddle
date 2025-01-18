@@ -128,6 +128,14 @@ public class ResponseHTTP extends StructureHTTP {
 		return currentData;
 	}
 	
+	public byte[] memory () {
+		return memory;
+	}
+	
+	public void memory ( byte[] mem) {
+		memory = mem;
+	}
+	
 	public int dataLength () {
 		return dataEnd - dataStart;
 	}

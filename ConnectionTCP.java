@@ -138,6 +138,7 @@ public abstract class ConnectionTCP extends Server implements Connection {
 		if (reading) {
 			chunks++;
 			received();
+			if (inboundMemoryFull()) inboundMemoryFullEvent();
 		}
 		
 		// if we wrote something
@@ -240,15 +241,35 @@ public abstract class ConnectionTCP extends Server implements Connection {
 		return inboundMemory;
 	}
 	
-	public byte[] inboundMemory ( byte[] newMemory ) {
-		byte[] temp = inboundMemory;
-		inboundMemoryPlace = 0;
-		inboundMemory = newMemory;
-		return temp;
+	protected byte[] inboundMemory ( byte[] next ) {
+		byte[] prev = inboundMemory;
+		inboundMemory = next;
+		return prev;
+	}
+	
+	protected void inboundMemory ( int size ) {
+		byte[] next = new byte[size];
+		byte[] prev = inboundMemory( next );
+		int nextLen = next.length;
+		int prevLen = prev.length;
+		if (nextLen > prevLen) System.arraycopy( prev, 0, next, 0, prevLen );
+		else System.arraycopy( prev, 0, next, 0, nextLen );
 	}
 	
 	public int inboundMemoryPlace () {
 		return inboundMemoryPlace;
+	}
+	
+	protected void inboundMemoryPlace ( int place ) {
+		inboundMemoryPlace = place;
+	}
+	
+	protected void inboundMemoryFullEvent () {
+		System.err.println( name()+":"+port()+" ("+getClass().getName()+") inbound memory full!" );
+	}
+	
+	public boolean inboundMemoryFull () {
+		return (inboundMemoryPlace >= inboundMemory.length);
 	}
 	
 	public ConnectionTCP receive ( int chunksToReceive ) {
