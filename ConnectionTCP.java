@@ -150,7 +150,7 @@ public abstract class ConnectionTCP extends Server implements Connection {
 		if (writing || reading) {
 			timeoutStart = System.currentTimeMillis();
 		} else {
-			sleep(1);
+			sleep(10);
 		}
 		
 		// check for client closing socket

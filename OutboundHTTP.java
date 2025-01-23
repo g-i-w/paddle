@@ -13,11 +13,11 @@ public class OutboundHTTP extends ConnectionTCP {
 	// simple anonymous connection
 	
 	public OutboundHTTP ( String address, String path, int maxInboundMemory ) throws Exception {
-		this( address, 80, "GET", path, new byte[64*1024], maxInboundMemory ); // 64kiB
+		this( address, 80, "GET", path, new byte[4*1024*1024], maxInboundMemory ); // 4MiB
 	}
 
 	public OutboundHTTP ( String address, int port, String method, String path, int maxInboundMemory ) throws Exception {
-		this( address, port, method, path, new byte[64*1024], maxInboundMemory ); // 4kiB
+		this( address, port, method, path, new byte[4*1024*1024], maxInboundMemory ); // 4MiB
 	}
 
 	public OutboundHTTP ( String address, int port, String method, String path, byte[] inboundMemory, int maxInboundMemory ) throws Exception {
@@ -30,7 +30,7 @@ public class OutboundHTTP extends ConnectionTCP {
 			null,
 			inboundMemory,
 			-1,
-			4000,
+			10000, // 10 sec
 			maxInboundMemory
 		);
 	}
