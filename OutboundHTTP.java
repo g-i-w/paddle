@@ -10,10 +10,34 @@ public class OutboundHTTP extends ConnectionTCP {
 	private Server server;
 	private int maxInboundMemory;
 	
+	private static ServerState defaultServerState () {
+		return new ServerState() {
+			public void opened ( Connection c ) {
+				System.err.print( "[" );
+			}
+			
+			public void received ( Connection c ) {
+				System.err.print( "." );			
+			}
+			
+			public void transmitted ( Connection c ) {
+			}
+			
+			public void closed ( Connection c ) {
+				System.err.println( "]" );
+			}
+		};
+	}
+	
+	
 	// simple anonymous connection
 	
 	public OutboundHTTP ( String address, String path, int maxInboundMemory ) throws Exception {
 		this( address, 80, "GET", path, new byte[4*1024*1024], maxInboundMemory ); // 4MiB
+	}
+
+	public OutboundHTTP ( String address, String path, int inboundMemorySize, int maxInboundMemory ) throws Exception {
+		this( address, 80, "GET", path, new byte[inboundMemorySize], maxInboundMemory ); // 4MiB
 	}
 
 	public OutboundHTTP ( String address, int port, String method, String path, int maxInboundMemory ) throws Exception {
@@ -22,7 +46,7 @@ public class OutboundHTTP extends ConnectionTCP {
 
 	public OutboundHTTP ( String address, int port, String method, String path, byte[] inboundMemory, int maxInboundMemory ) throws Exception {
 		this (
-			new ServerState(),
+			defaultServerState(),
 			new Socket( address, port ),
 			method,
 			path,
@@ -122,7 +146,8 @@ public class OutboundHTTP extends ConnectionTCP {
 		OutboundHTTP http = new OutboundHTTP (
 			args[0],
 			( args.length > 1 ? args[1] : "/" ),
-			100*1024*1024 // 100MiB max
+			( args.length > 2 ? Integer.parseInt(args[2]) : 1024 ), // 1kiB
+			( args.length > 3 ? Integer.parseInt(args[3]) : 100*1024*1024 ) // 100MiB
 		);
 		while( !http.response().complete() ) Thread.sleep(100);
 		//Thread.sleep(1000);

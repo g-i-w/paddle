@@ -97,6 +97,11 @@ public abstract class ConnectionTCP extends Server implements Connection {
 		//System.out.println( this.getClass().getName()+" socket: "+socket );
 	}
 	
+	@Override
+	public void initSuccess () {
+		
+	}
+
 	public void loop () throws Exception {
 		boolean writing = false;
 		boolean reading = false;
@@ -118,17 +123,16 @@ public abstract class ConnectionTCP extends Server implements Connection {
 		
 		// READ loop
 		// catch up on reading if there's data in the stream...
-		int nextByte = 0;
+		int bytesAvailable = 0;
 		while (
 			inboundMemory != null &&
-			input.available() > 0 &&
-			inboundMemory.length > inboundMemoryPlace &&
-			(nextByte = input.read()) != -1 // might block, so check this last
+			(bytesAvailable = input.available()) > 0 &&
+			inboundMemory.length > inboundMemoryPlace 
 		) {
-			inboundMemory[inboundMemoryPlace] = (byte)nextByte;
-			//System.out.println( this.getClass().getName()+" received: "+(char)inboundMemory[inboundMemoryPlace] );
-			//System.out.print( (char)inboundMemory[inboundMemoryPlace] );
-			inboundMemoryPlace++;
+			int memoryAvailable = inboundMemory.length - inboundMemoryPlace;
+			if (memoryAvailable < bytesAvailable) bytesAvailable = memoryAvailable;
+			int bytesRead = input.read( inboundMemory, inboundMemoryPlace, bytesAvailable );
+			inboundMemoryPlace += bytesRead;
 			reading = true;
 		}
 		
@@ -150,12 +154,7 @@ public abstract class ConnectionTCP extends Server implements Connection {
 		if (writing || reading) {
 			timeoutStart = System.currentTimeMillis();
 		} else {
-			sleep(10);
-		}
-		
-		// check for client closing socket
-		if (nextByte == -1) {
-			end();
+			sleep(1);
 		}
 		
 		// check for timeout
