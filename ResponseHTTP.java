@@ -93,7 +93,7 @@ public class ResponseHTTP extends StructureHTTP {
 	}
 	
 	private boolean EOD () {
-		return (dataLength() >= contentLength()-1);
+		return (dataLength() >= contentLength());
 	}
 	
 	private boolean DELIM () {
@@ -120,12 +120,10 @@ public class ResponseHTTP extends StructureHTTP {
 	
 	public byte[] data () {
 		if (memory==null) return new byte[]{};
-		int len = dataEnd - dataStart;
-		byte[] currentData = new byte[len];
-		for (int i=0; i<len; i++) {
-			currentData[i] = memory[dataStart+i];
-		}
-		return currentData;
+		int len = dataLength();
+		byte[] data = new byte[len];
+		System.arraycopy( memory, dataStart, data, 0, len );
+		return data;
 	}
 	
 	public byte[] memory () {
@@ -181,8 +179,8 @@ public class ResponseHTTP extends StructureHTTP {
 					else			appendChar( headerVal, memory, index );
 					break;
 				case DATA:
+					dataEnd++;
 					if      (EOD())		state = State.COMPLETE;
-					else			dataEnd++;
 					break;
 				case COMPLETE:
 					break;

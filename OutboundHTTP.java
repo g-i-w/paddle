@@ -2,6 +2,7 @@ package paddle;
 
 import java.net.*;
 import java.io.*;
+import java.nio.file.Files;
 
 public class OutboundHTTP extends ConnectionTCP {
 	
@@ -12,19 +13,32 @@ public class OutboundHTTP extends ConnectionTCP {
 	
 	private static ServerState defaultServerState () {
 		return new ServerState() {
+		
+			private long receiveStart = 0;
+			private long receiveEnd;
+
 			public void opened ( Connection c ) {
-				System.err.print( "[" );
 			}
 			
 			public void received ( Connection c ) {
-				System.err.print( "." );			
+				if (receiveStart==0) receiveStart = System.nanoTime();
 			}
 			
 			public void transmitted ( Connection c ) {
 			}
 			
 			public void closed ( Connection c ) {
-				System.err.println( "]" );
+				// time
+				receiveEnd = System.nanoTime();
+				long delta = receiveEnd - receiveStart;
+				// len
+				ResponseHTTP res = ((OutboundHTTP)c).response();
+				int len = res.data().length;
+				// formatting
+				int mb = 1024*1024;
+				double MiB = (double)len/mb;
+				double MiBps = ((double)len/delta)*10e9/mb;
+				System.err.println( "Received: "+len+" bytes ("+String.format( "%.2f", MiB )+" MiB, "+String.format( "%.2f", MiBps )+" MiB/s)" );
 			}
 		};
 	}
@@ -99,8 +113,8 @@ public class OutboundHTTP extends ConnectionTCP {
 	public void received () {
 		try {
 			response().parse( inboundMemoryPlace() );
-			if (response.complete()) close();
 			super.received();
+			if (response.complete()) close();
 		} catch (Exception e) {
 			e.printStackTrace();
 			end();
@@ -146,12 +160,16 @@ public class OutboundHTTP extends ConnectionTCP {
 		OutboundHTTP http = new OutboundHTTP (
 			args[0],
 			( args.length > 1 ? args[1] : "/" ),
-			( args.length > 2 ? Integer.parseInt(args[2]) : 1024 ), // 1kiB
-			( args.length > 3 ? Integer.parseInt(args[3]) : 100*1024*1024 ) // 100MiB
+			1024, // 1kiB
+			100*1024*1024 // 100MiB
 		);
 		while( !http.response().complete() ) Thread.sleep(100);
 		//Thread.sleep(1000);
-		System.out.println( new String( http.inboundMemory() ) );
+		if (args.length > 2) {
+			Files.write( new File( args[2] ).toPath(), http.response().data() );
+		} else {
+			System.out.println( new String( http.inboundMemory() ) );
+		}
 	}
 		
 }
