@@ -23,6 +23,7 @@ public class InboundHTTP extends ConnectionTCP {
 	
 	public void received () {
 		try {
+			while (request==null) sleep(1);
 			request.parse( inboundMemoryPlace() );
 			super.received();
 		} catch (Exception e) {
