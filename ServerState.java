@@ -216,9 +216,9 @@ public class ServerState {
 		
 	public ResponseHTTP httpFileResponse ( InboundHTTP session, String rootPath, String mimeType, long maxSize ) {
 		String path = session.request().path();
-		System.out.println( path );
+		//System.out.println( path );
 		if (path.indexOf("..") == -1) { // block dir traversal
-			System.out.println( "OK" );
+			//System.out.println( "OK" );
 			try {
 				// File object
 				File file = new File( rootPath+path );
@@ -257,7 +257,7 @@ public class ServerState {
 	public String httpMIME (  InboundHTTP session ) {
 		String path = session.request().path();
 		String ext = path.substring( path.lastIndexOf(".")+1, path.length() );
-		System.out.println( "ext: '"+ext+"'" );
+		//System.out.println( "ext: '"+ext+"'" );
 		String[] mimes = httpMIME();
 		for (int i=1; i<mimes.length; i+=2) {
 			if (ext.equals(mimes[i-1])) return mimes[i];
@@ -267,7 +267,7 @@ public class ServerState {
 	
 	public ResponseHTTP httpFileResponse ( InboundHTTP session, String rootPath ) {
 		String mime = httpMIME( session );
-		System.out.println( rootPath+session.request().path()+": "+mime );
+		//System.out.println( rootPath+session.request().path()+": "+mime );
 		if (mime != null) {
 			return httpFileResponse( session, rootPath, mime, -1 );
 		} else {
