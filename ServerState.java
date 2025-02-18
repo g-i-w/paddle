@@ -216,7 +216,9 @@ public class ServerState {
 		
 	public ResponseHTTP httpFileResponse ( InboundHTTP session, String rootPath, String mimeType, long maxSize ) {
 		String path = session.request().path();
+		System.out.println( path );
 		if (path.indexOf("..") == -1) { // block dir traversal
+			System.out.println( "OK" );
 			try {
 				// File object
 				File file = new File( rootPath+path );
@@ -241,20 +243,21 @@ public class ServerState {
 	
 	public String[] httpMIME () {
 		return new String[] {
-			".txt",		"text/plain",
-			".htm",		"text/html",
-			".html",	"text/html",
-			".js",		"application/javascript",
-			".json",	"application/json",
-			".jpg",		"image/jpg",
-			".jpeg",	"image/jpg",
-			".png",		"image/png"
+			"txt",	"text/plain",
+			"htm",	"text/html",
+			"html",	"text/html",
+			"js",	"application/javascript",
+			"json",	"application/json",
+			"jpg",	"image/jpg",
+			"jpeg",	"image/jpg",
+			"png",	"image/png"
 		};
 	}
 	
 	public String httpMIME (  InboundHTTP session ) {
 		String path = session.request().path();
 		String ext = path.substring( path.lastIndexOf(".")+1, path.length() );
+		System.out.println( "ext: '"+ext+"'" );
 		String[] mimes = httpMIME();
 		for (int i=1; i<mimes.length; i+=2) {
 			if (ext.equals(mimes[i-1])) return mimes[i];
@@ -264,8 +267,12 @@ public class ServerState {
 	
 	public ResponseHTTP httpFileResponse ( InboundHTTP session, String rootPath ) {
 		String mime = httpMIME( session );
-		if (mime != null) return httpFileResponse( session, rootPath, mime, -1 );
-		else return httpForbidden();
+		System.out.println( rootPath+session.request().path()+": "+mime );
+		if (mime != null) {
+			return httpFileResponse( session, rootPath, mime, -1 );
+		} else {
+			return httpForbidden();
+		}
 	}
 	
 	public boolean httpRespondFile ( InboundHTTP session, String rootPath ) {

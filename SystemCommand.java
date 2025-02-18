@@ -15,6 +15,7 @@ public class SystemCommand extends TimerTask {
 	private int destroyed;
 	private int destroyedForcibly;
 	private String command;
+	private String[] commandArray;
 	private InputStream stdoutStream;
 	private InputStream stderrStream;
 	private ReadStream stdout;
@@ -36,8 +37,13 @@ public class SystemCommand extends TimerTask {
 	}
 
 	public SystemCommand ( String command, String name, long timeout, boolean verbose, boolean lastLineOnly ) {
+		this( command, null, name, timeout, verbose, lastLineOnly );
+	}
+
+	public SystemCommand ( String command, String[] commandArray, String name, long timeout, boolean verbose, boolean lastLineOnly ) {
 		this.name = name;
 		this.command = command;
+		this.commandArray = commandArray;
 		this.timeout = timeout;
 		this.verbose = verbose;
 		this.lastLineOnly = lastLineOnly;
@@ -77,7 +83,8 @@ public class SystemCommand extends TimerTask {
 		preExec();
 		durationStart = System.currentTimeMillis();
 		try {
-			commandProc = Runtime.getRuntime().exec( command );
+			if (command != null) commandProc = Runtime.getRuntime().exec( command );
+			else if (commandArray != null) commandProc = Runtime.getRuntime().exec( commandArray );
 			stdoutStream = commandProc.getInputStream();
 			stderrStream = commandProc.getErrorStream();
 		} catch (Exception e) {
@@ -128,12 +135,22 @@ public class SystemCommand extends TimerTask {
 	public void kill () {
 		if (stdout!=null) stdout.end();
 		if (stderr!=null) stderr.end();
-		if (commandProc!=null) commandProc.destroy();
+		if (commandProc!=null) {
+			for (Object handleObj : commandProc.descendants().toArray()) {
+				((ProcessHandle)handleObj).destroy();
+			}
+			commandProc.destroy();
+		}
 		destroyed++;
 	}
 	
 	public void killForcibly () {
-		if (commandProc!=null) commandProc.destroyForcibly();
+		if (commandProc!=null) {
+			for (Object handleObj : commandProc.descendants().toArray()) {
+				((ProcessHandle)handleObj).destroyForcibly();
+			}
+			commandProc.destroyForcibly();
+		}
 		if (stdout!=null) stdout.end();
 		if (stderr!=null) stderr.end();
 		destroyedForcibly++;
@@ -148,8 +165,17 @@ public class SystemCommand extends TimerTask {
 		return this;
 	}
 	
+	public String[] commandArray () {
+		return commandArray;
+	}
+	
+	public SystemCommand commandArray ( String[] commandArray ) {
+		this.commandArray = commandArray;
+		return this;
+	}
+	
 	public int exitValue () {
-		return ( commandProc != null ? commandProc.exitValue() : exitValue );
+		return ( commandProc != null && done ? commandProc.exitValue() : exitValue );
 	}
 	
 	public boolean success () {
